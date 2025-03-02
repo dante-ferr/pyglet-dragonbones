@@ -7,7 +7,7 @@ class AnimationEvent:
     current_duration = 0.0
     total_duration: float
 
-    def __init__(self, event_sequence: dict, event_index=0, start_duration=0):
+    def __init__(self, event_sequence: dict, event_index=0, start_duration=0.0):
         self.event_sequence = event_sequence
         self.event_index = event_index
         self.total_duration = self._duration_of(event_index)
@@ -36,7 +36,7 @@ class AnimationEvent:
         raise NotImplementedError
 
     def _get_next_valid_event_index(
-        self, event_index=None, step=1, remainder_duration=0
+        self, event_index=None, step=1, remainder_duration=0.0
     ):
         """Get the next valid event index, skipping useless events or the ones with a duration smaller than the remainder duration."""
         if event_index is None:

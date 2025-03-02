@@ -33,7 +33,7 @@ class SkeletonAnimation:
         self,
         info: dict,
         skeleton: "Skeleton",
-        framerate=30,
+        framerate=30.0,
         frame=0,
         speed=1.0,
         paused=False,

@@ -3,8 +3,6 @@ from typing import Literal
 
 
 class SkeletonBody(pymunk.Body):
-    space: pymunk.Space
-
     def __init__(self, mass: float = 0, moment: float = 0):
         """
         A Body object that holds the physics representation of the skeleton.
@@ -15,6 +13,9 @@ class SkeletonBody(pymunk.Body):
 
     def setup_collision_handlers(self):
         """Set up collision handlers for the body."""
+        if not self.space:
+            raise ValueError("Space not set for the skeleton's body.")
+
         collision_handler = self.space.add_collision_handler(1, 2)
 
         collision_handler.begin = self._on_collision_begin

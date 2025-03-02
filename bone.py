@@ -72,8 +72,6 @@ class Bone:
     name: str
     group: pyglet.graphics.Group
 
-    skeleton = None
-
     def __init__(self, bone_info, group: pyglet.graphics.Group, skeleton: "Skeleton"):
         self.name = bone_info["name"]
         self.group = group

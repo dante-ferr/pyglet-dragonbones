@@ -23,7 +23,7 @@ class BoneEvent(AnimationEvent):
         event_type: BoneEventType,
         event_sequence: dict,
         event_index=0,
-        start_duration=0,
+        start_duration=0.0,
     ):
         super().__init__(event_sequence, event_index, start_duration)
         self.bone = bone

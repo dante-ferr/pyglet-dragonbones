@@ -78,7 +78,10 @@ class Skeleton:
 
         for b in data:
             bone_name = b["name"]
-            bone_group = groups.get(bone_name) or groups["all"]
+            bone_group = groups.get(bone_name)
+            if bone_group is None:
+                raise ValueError(f"Bone {bone_name} not found in groups.")
+
             bone = Bone(b, bone_group, self)
             bones[bone_name] = bone
 
@@ -104,6 +107,8 @@ class Skeleton:
                 slot_subtextures = [
                     self.subtextures[display["name"]] for display in slot_displays
                 ]
+            else:
+                return
 
             # Create a slot and assign it to the bone's slot dictionary
             bone_name = slot_info["parent"]
