@@ -5,7 +5,6 @@ from .animation.skeleton_animation import SkeletonAnimation
 from .get_subtextures import get_subtextures, Subtexture
 import os
 import pyglet
-from .skeleton_body import SkeletonBody
 from .animation.skeleton_animation_manager import SkeletonAnimationManager
 
 
@@ -24,13 +23,12 @@ class Skeleton:
 
     target_angle: float | None = None
 
-    animation: SkeletonAnimationManager
+    animation_manager: SkeletonAnimationManager
 
     def __init__(
         self,
         skeleton_path: str,
         groups: dict[str, pyglet.graphics.Group],
-        body: SkeletonBody,
         angle_smoothing_speed=10.0,
     ):
         """
@@ -67,9 +65,9 @@ class Skeleton:
 
         animation_data = armature_data["animation"]
         framerate = skeleton_data["frameRate"]
-        self.animation = SkeletonAnimationManager(animation_data, self, framerate)
-
-        self.body = body
+        self.animation_manager = SkeletonAnimationManager(
+            animation_data, self, framerate
+        )
 
         self.angle_smoothing_speed = angle_smoothing_speed
 
@@ -140,20 +138,21 @@ class Skeleton:
             bone.do_default_pose()
 
     def set_smooth(self, smooth: bool):
-        self.animation.set_smooth(smooth)
+        self.animation_manager.set_smooth(smooth)
 
     def on_animation_start(self):
         for bone in self.bones.values():
             bone.on_animation_start()
 
+    def run_animation(self, animation_name: str | None, starting_frame=0, speed=1):
+        self.animation_manager.run(animation_name, starting_frame, speed)
+
     def update(self, dt):
         """Update skeleton's attributes and draw each of its parts."""
-        self.body.update(dt)
-        self.set_position(self.body.position.x, self.body.position.y)
         for bone in self.bones.values():
             bone.update(dt)
 
-        self.animation.update(dt)
+        self.animation_manager.update(dt)
 
         self.batch.draw()
 
