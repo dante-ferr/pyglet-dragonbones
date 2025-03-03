@@ -9,8 +9,6 @@ if TYPE_CHECKING:
 class Slot:
     current_display: int
 
-    bone = None
-
     def __init__(
         self,
         slot_info,
@@ -18,6 +16,7 @@ class Slot:
         subtextures: list[Subtexture],
         batch: pyglet.graphics.Batch,
     ):
+        self.bone = bone
         self.name = slot_info["name"]
         self.subtextures = subtextures
         self.group = bone.group
@@ -33,6 +32,8 @@ class Slot:
         self.sprite = pyglet.sprite.Sprite(
             default_subtexture, group=self.group, batch=batch
         )
+
+        self.bone.slots[self.name] = self
 
     def change_display(self, display_index: int):
         """Change the sprite's texture."""

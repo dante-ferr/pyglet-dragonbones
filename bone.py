@@ -54,25 +54,12 @@ class Bone:
     target_relative_angle: float | None = None
     target_relative_scale: tuple[float, float] | None = None
 
-    smoothing_speed_timer = {
-        "between_animations": 5,
-        "current": 0,
-    }
-    smoothing_speed: SmoothingSpeedType = {
-        "between_animations": {
-            "angle": 0.3,
-            "position": 0.3,
-            "scale": 0.3,
-        },
-        "angle": 1,
-        "position": 1,
-        "scale": 1,
-    }
-
-    name: str
-    group: pyglet.graphics.Group
-
-    def __init__(self, bone_info, group: pyglet.graphics.Group, skeleton: "Skeleton"):
+    def __init__(
+        self,
+        bone_info,
+        skeleton: "Skeleton",
+        group: pyglet.graphics.Group | None = None,
+    ):
         self.name = bone_info["name"]
         self.group = group
         # self.parent = bone_info['parent']
@@ -102,6 +89,21 @@ class Bone:
                 else 1.0
             ),
         )
+
+        self.smoothing_speed_timer = {
+            "between_animations": 5,
+            "current": 0,
+        }
+        self.smoothing_speed: SmoothingSpeedType = {
+            "between_animations": {
+                "angle": 0.3,
+                "position": 0.3,
+                "scale": 0.3,
+            },
+            "angle": 1,
+            "position": 1,
+            "scale": 1,
+        }
 
         self.position = (0, 0)
         self.angle = 0
