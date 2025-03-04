@@ -1,6 +1,7 @@
 import pyglet
 from .get_subtextures import Subtexture
 from typing import TYPE_CHECKING
+from utils import refine_texture
 
 if TYPE_CHECKING:
     from .bone import Bone
@@ -27,10 +28,12 @@ class Slot:
 
         self.default_display = slot_info.get("displayIndex", 1) - 1
         self.current_display = self.default_display
-        default_subtexture = self.subtextures[self.default_display]["image"]
+        default_texture = self._get_texture_from_image(
+            self.subtextures[self.default_display]["image"]
+        )
 
         self.sprite = pyglet.sprite.Sprite(
-            default_subtexture, group=self.group, batch=batch
+            default_texture, group=self.group, batch=batch
         )
 
         self.bone.slots[self.name] = self
@@ -38,7 +41,16 @@ class Slot:
     def change_display(self, display_index: int):
         """Change the sprite's texture."""
         self.current_display = display_index
-        self.sprite.image = self.subtextures[display_index]["image"]
+
+        self.sprite.image = self._get_texture_from_image(
+            self.subtextures[display_index]["image"]
+        )
+
+    def _get_texture_from_image(self, image: pyglet.image.AbstractImage):
+        """Change the sprite's texture."""
+        texture = image.get_texture()
+        refine_texture()
+        return texture
 
     def do_default_pose(self):
         self.change_display(self.default_display)
