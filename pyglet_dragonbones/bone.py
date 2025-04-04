@@ -3,14 +3,13 @@ from .slot import Slot
 import pyglet
 from typing import TYPE_CHECKING, TypedDict, Literal
 import math
+from .config import config
 
 if TYPE_CHECKING:
     from .skeleton import Skeleton
 
-with open("game/config.json", "r") as file:
-    config_data = json.load(file)
-fps = config_data["fps"]
-global_scale = config_data["global_scale"]
+fps = config.fps
+global_scale = config.global_scale
 
 
 class BetweenAnimationsType(TypedDict):

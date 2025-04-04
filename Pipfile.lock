@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "963c66b7b1fac947bcfa10a4814c956e990f9f7c7ed1bbe4bb4b106d5c58fb05"
+            "sha256": "5faadc08c7e1f57f27c531223f917d0b3b3cf537abab9ab5aedf4706f64e9ded"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -503,6 +503,10 @@
             "index": "pypi",
             "markers": "python_version >= '3.8'",
             "version": "==2.1.3"
+        },
+        "pyglet-dragonbones": {
+            "editable": true,
+            "path": "."
         },
         "pymunk": {
             "hashes": [
