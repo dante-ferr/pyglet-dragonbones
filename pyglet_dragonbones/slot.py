@@ -1,7 +1,7 @@
 import pyglet
 from .get_subtextures import Subtexture
 from typing import TYPE_CHECKING
-from utils import refine_texture
+from .utils import refine_texture
 
 if TYPE_CHECKING:
     from .bone import Bone

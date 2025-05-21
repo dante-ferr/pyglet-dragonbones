@@ -1,3 +1,5 @@
+MANIFEST.in
+pyproject.toml
 setup.py
 pyglet_dragonbones/__init__.py
 pyglet_dragonbones/bone.py
