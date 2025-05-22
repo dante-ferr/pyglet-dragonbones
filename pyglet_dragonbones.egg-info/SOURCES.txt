@@ -1,6 +1,5 @@
 MANIFEST.in
 pyproject.toml
-setup.py
 pyglet_dragonbones/__init__.py
 pyglet_dragonbones/bone.py
 pyglet_dragonbones/config.py
@@ -11,6 +10,7 @@ pyglet_dragonbones/slot.py
 pyglet_dragonbones.egg-info/PKG-INFO
 pyglet_dragonbones.egg-info/SOURCES.txt
 pyglet_dragonbones.egg-info/dependency_links.txt
+pyglet_dragonbones.egg-info/requires.txt
 pyglet_dragonbones.egg-info/top_level.txt
 pyglet_dragonbones/animation/__init__.py
 pyglet_dragonbones/animation/animation_event.py
