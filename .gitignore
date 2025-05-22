@@ -1,1 +1,2 @@
-pyglet_dragonbones.egg-info
+*.egg-info
+.venv
