@@ -1,5 +1,3 @@
-import json
-from .slot import Slot
 import pyglet
 from typing import TYPE_CHECKING, TypedDict, Literal
 import math
@@ -7,6 +5,8 @@ from .config import config
 
 if TYPE_CHECKING:
     from .skeleton import Skeleton
+    from .slot import Slot
+    from pyglet.graphics import Group
 
 fps = config.fps
 global_scale = config.global_scale
@@ -35,7 +35,7 @@ def rotate_position(position, angle):
 
 
 class Bone:
-    slots: dict[str, Slot]
+    slots: dict[str, "Slot"]
 
     base_position: tuple[float, float]
     base_angle = 0.0
@@ -57,7 +57,7 @@ class Bone:
         self,
         bone_info,
         skeleton: "Skeleton",
-        group: pyglet.graphics.Group | None = None,
+        group: "Group | None" = None,
     ):
         self.name = bone_info["name"]
         self.group = group

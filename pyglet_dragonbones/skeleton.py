@@ -1,11 +1,13 @@
 import json
 from .bone import Bone
-from .slot import Slot
 from .animation.skeleton_animation import SkeletonAnimation
-from .get_subtextures import get_subtextures, Subtexture
 import os
 import pyglet
 from .animation.skeleton_animation_manager import SkeletonAnimationManager
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pyglet.graphics import Group
 
 
 class Skeleton:
@@ -16,9 +18,6 @@ class Skeleton:
 
     bones: dict[str, Bone]
 
-    subtextures: dict[str, Subtexture]
-    batch: pyglet.graphics.Batch
-
     animation_data: list[dict]
 
     target_angle: float | None = None
@@ -28,8 +27,9 @@ class Skeleton:
     def __init__(
         self,
         skeleton_path: str,
-        groups: dict[str, pyglet.graphics.Group],
+        groups: dict[str, "Group"] | None = None,
         angle_smoothing_speed=10.0,
+        render=True,
     ):
         """
         Load a skeleton from a JSON file and create bones and slots.
@@ -39,51 +39,71 @@ class Skeleton:
             - <db project name>_ske.json: The skeleton data in JSON format.
             - <db project name>.json: The subtexture data in JSON format.
             - <db project name>.png: The subtexture image.
-        - groups: A dictionary mapping pyglet groups. Each group corresponds to a bone in your DragonBones project and must have the same name as its associated bone. Bones without a corresponding group will be assigned to the skeleton's base group by default.
+        - groups: A dictionary mapping pyglet groups. Each group corresponds to a bone in your DragonBones project and must have the same name as its associated bone. Bones without a corresponding group will be assigned to the skeleton's base group by default. Setting "render" to False makes the groups unnecessary, so if this is the case you should pass None to this parameter or omit it.
+        - angle_smoothing_speed: The speed at which the angle of the skeleton is approached to the target angle.
+        - render: A boolean indicating whether to render the skeleton. Setting it to False prevents xlib related errors on environments without displays.
         """
-        self.batch = pyglet.graphics.Batch()
+        self.groups = groups
+        self.render = render
+        self.angle_smoothing_speed = angle_smoothing_speed
 
-        entity_name = os.path.basename(skeleton_path)
-        with open(f"{skeleton_path}/{entity_name}_ske.json", "r") as file:
-            skeleton_data = json.load(file)
+        self.skeleton_path = skeleton_path
+        self.entity_name = os.path.basename(skeleton_path)
+        self.skeleton_data = self._get_skeleton_data(skeleton_path)
 
-        armature_data = skeleton_data["armature"][0]
+        self.armature_data = self.skeleton_data["armature"][0]
 
-        self.subtextures = get_subtextures(
-            f"{skeleton_path}/{entity_name}_tex.json",
-            f"{skeleton_path}/{entity_name}_tex.png",
-        )
+        if render:
+            self.batch = pyglet.graphics.Batch()
 
-        self.bones = self._load_bones(armature_data["bone"], groups)
-        self.slots = self._load_slots(
-            (armature_data["slot"], armature_data["skin"][0]["slot"])
-        )
+        self._load_structure()
 
         self.set_position(0, 0)
         self.set_scale(1, 1)
         self.set_angle(0)
 
-        animation_data = armature_data["animation"]
-        framerate = skeleton_data["frameRate"]
-        self.animation_manager = SkeletonAnimationManager(
-            animation_data, self, framerate
-        )
+        if self.render:
+            self.animation_manager = self._get_animation_manager()
 
-        self.angle_smoothing_speed = angle_smoothing_speed
+    def _get_skeleton_data(self, skeleton_path: str):
+        with open(f"{skeleton_path}/{self.entity_name}_ske.json", "r") as file:
+            return json.load(file)
 
-    def _load_bones(self, data, groups: dict[str, pyglet.graphics.Group]):
+    def _load_structure(self):
+        self.bones = self._load_bones()
+        if self.render:
+            from .get_subtextures import get_subtextures
+
+            subtextures = get_subtextures(
+                f"{self.skeleton_path}/{self.entity_name}_tex.json",
+                f"{self.skeleton_path}/{self.entity_name}_tex.png",
+            )
+            self.slots = self._load_slots(
+                (self.armature_data["slot"], self.armature_data["skin"][0]["slot"]),
+                subtextures=subtextures,
+            )
+
+    def _get_animation_manager(self):
+        animation_data = self.armature_data["animation"]
+        framerate = self.skeleton_data["frameRate"]
+        return SkeletonAnimationManager(animation_data, self, framerate)
+
+    def _load_bones(self):
+        data = self.armature_data["bone"]
         bones: dict[str, Bone] = {}
 
         for b in data:
             bone_name = b["name"]
-            bone_group = groups.get(bone_name)
+            bone_group = self.groups.get(bone_name) if self.groups else None
 
             bone = Bone(b, self, bone_group)
             bones[bone_name] = bone
 
         return bones
 
-    def _load_slots(self, data):
+    def _load_slots(self, data, subtextures):
+        from .slot import Slot
+
         slots: dict[str, Slot] = {}
 
         slot_data, skin_data = data
@@ -101,7 +121,7 @@ class Skeleton:
             slot_subtextures = {}
             if slot_displays:
                 slot_subtextures = [
-                    self.subtextures[display["name"]] for display in slot_displays
+                    subtextures[display["name"]] for display in slot_displays
                 ]
             else:
                 return
@@ -137,24 +157,24 @@ class Skeleton:
         for bone in self.bones.values():
             bone.do_default_pose()
 
-    def set_smooth(self, smooth: bool):
-        self.animation_manager.set_smooth(smooth)
-
     def on_animation_start(self):
         for bone in self.bones.values():
             bone.on_animation_start()
 
     def run_animation(self, animation_name: str | None, starting_frame=0, speed=1):
-        self.animation_manager.run(animation_name, starting_frame, speed)
+        if self.render:
+            self.animation_manager.run(animation_name, starting_frame, speed)
 
     def update(self, dt):
         """Update skeleton's attributes and draw each of its parts."""
         for bone in self.bones.values():
             bone.update(dt)
 
-        self.animation_manager.update(dt)
+        if self.render:
+            self.animation_manager.update(dt)
 
-        self.batch.draw()
+        if self.render:
+            self.batch.draw()
 
     def update_angle_to_target(self, dt):
         if self.target_angle is not None:

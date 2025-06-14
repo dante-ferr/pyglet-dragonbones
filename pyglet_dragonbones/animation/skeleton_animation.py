@@ -1,17 +1,17 @@
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, TypedDict, cast
 from .bone_event import BoneEvent, BoneEventType
-from .slot_event import SlotEvent, SlotEventType
 
 if TYPE_CHECKING:
+    from .slot_event import SlotEvent, SlotEventType
     from ..skeleton import Skeleton
+    from ..slot import Slot
 
-BoneEventsDict = dict[BoneEventType, BoneEvent]
-SlotEventsDict = dict[SlotEventType, SlotEvent]
+    BoneEventsDict = dict[BoneEventType, BoneEvent]
+    SlotEventsDict = dict[SlotEventType, SlotEvent]
 
-
-class EventsDict(TypedDict):
-    bone: dict[str, BoneEventsDict]
-    slot: dict[str, SlotEventsDict]
+    class EventsDict(TypedDict):
+        bone: "dict[str, BoneEventsDict]"
+        slot: "dict[str, SlotEventsDict]"
 
 
 class SkeletonAnimation:
@@ -21,7 +21,7 @@ class SkeletonAnimation:
     speed: float
     smooth: bool = True
 
-    events: EventsDict = {
+    events: "EventsDict" = {
         "bone": {},
         "slot": {},
     }
@@ -76,12 +76,18 @@ class SkeletonAnimation:
                 if new_event:
                     self.events["bone"][event.bone.name][event_type] = new_event
 
+        from .slot_event import SlotEvent
+
         for slot_events in self.events["slot"].values():
             for event_type, event in slot_events.items():
                 new_event = event.update(
                     frame_step,
                     lambda part, event_type, event_sequence, event_index, start_duration: SlotEvent(
-                        part, event_type, event_sequence, event_index, start_duration
+                        part,
+                        event_type,
+                        event_sequence,
+                        event_index,
+                        start_duration,
                     ),
                 )
                 if new_event:
@@ -111,6 +117,11 @@ class SkeletonAnimation:
 
     def _instantiate_events(self, frame: float = 0):
         """Instantiate the events for the given frame."""
+        self._instantiate_bone_events(frame)
+
+        self._instantiate_slot_events(frame)
+
+    def _instantiate_bone_events(self, frame: float):
         for bone_animation_info in self.bone_info:
             bone_name = bone_animation_info["name"]
             bone = self.skeleton.bones[bone_name]
@@ -131,9 +142,16 @@ class SkeletonAnimation:
                         start_duration=start_duration,
                     )
 
+    def _instantiate_slot_events(self, frame: float):
+        from .slot_event import SlotEvent
+
+        skeleton_slots = cast(
+            dict[str, "Slot"], self.skeleton.slots
+        )  # This function is only called when render is True. So the skeleton's slots are guaranteed to be of type "Slot".
+
         for slot_animation_info in self.slot_info:
             slot_name = slot_animation_info["name"]
-            slot = self.skeleton.slots[slot_name]
+            slot = skeleton_slots[slot_name]
 
             self.events["slot"][slot_name] = {}
             for slot_event_type in SlotEvent.all_event_types:
