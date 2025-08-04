@@ -6,7 +6,7 @@ authors = ["Dante Ferreira"]
 packages = [{ include = "pyglet_dragonbones" }]
 
 [tool.poetry.dependencies]
-python = ">=3.11"
+python = ">=3.10.0"
 pymunk = "*"
 numpy = "*"
 

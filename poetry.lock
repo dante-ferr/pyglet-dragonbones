@@ -237,5 +237,5 @@ dev = ["aafigure", "matplotlib", "numpy", "pygame", "pyglet", "sphinx", "wheel"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.11"
-content-hash = "df13083e318992c2475ea491d7e5c4bfab52eb55b2d5cd94184cae406e2de34a"
+python-versions = ">=3.10.0"
+content-hash = "34fcd63637273601a66f975087008577e655423bc2b2c1215cd8de1ca0740a8b"
