@@ -173,8 +173,8 @@ class Skeleton:
         if self.render:
             self.animation_manager.update(dt)
 
-        if self.render:
-            self.batch.draw()
+    def draw(self, dt):
+        self.batch.draw()
 
     def update_angle_to_target(self, dt):
         if self.target_angle is not None:
