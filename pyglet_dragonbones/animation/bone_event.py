@@ -1,9 +1,12 @@
-from typing import Literal, Callable
+from typing import Literal, Callable, TYPE_CHECKING
 from .animation_event import AnimationEvent
 from ..bone import Bone
 
-BoneEventType = Literal["translateFrame", "rotateFrame", "scaleFrame"]
+if TYPE_CHECKING:
+    from .skeleton_animation_manager import SkeletonAnimationManager
 
+
+BoneEventType = Literal["translateFrame", "rotateFrame", "scaleFrame"]
 
 class BoneEvent(AnimationEvent):
     skeleton_part_type = "bone"
@@ -25,7 +28,11 @@ class BoneEvent(AnimationEvent):
         event_index=0,
         start_duration=0.0,
     ):
-        super().__init__(event_sequence, event_index, start_duration)
+        super().__init__(
+            event_sequence,
+            event_index,
+            start_duration,
+        )
         self.bone = bone
         self.event_type = event_type
 

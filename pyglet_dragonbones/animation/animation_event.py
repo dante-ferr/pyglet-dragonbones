@@ -1,5 +1,7 @@
-from typing import Callable
+from typing import Callable, Literal, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from .skeleton_animation_manager import SkeletonAnimationManager
 
 class AnimationEvent:
     event_sequence: dict
@@ -7,7 +9,12 @@ class AnimationEvent:
     current_duration = 0.0
     total_duration: float
 
-    def __init__(self, event_sequence: dict, event_index=0, start_duration=0.0):
+    def __init__(
+        self,
+        event_sequence: dict,
+        event_index=0,
+        start_duration=0.0,
+    ):
         self.event_sequence = event_sequence
         self.event_index = event_index
         self.total_duration = self._duration_of(event_index)
@@ -60,9 +67,11 @@ class AnimationEvent:
         if event_index is None:
             event_index = self.event_index
 
-        return (
-            event_index + step if event_index + step < len(self.event_sequence) else 0
-        )
+        animation_ended = event_index + step >= len(self.event_sequence)
+        if animation_ended:
+            return 0
+        else:
+            return event_index + step
 
     def _duration_of(self, event_index: int):
         """Get the duration of the event at the given index."""

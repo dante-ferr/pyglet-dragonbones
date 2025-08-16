@@ -9,6 +9,8 @@ packages = [{ include = "pyglet_dragonbones" }]
 python = ">=3.10.0"
 pymunk = "*"
 numpy = "*"
+pyglet = "*"
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]

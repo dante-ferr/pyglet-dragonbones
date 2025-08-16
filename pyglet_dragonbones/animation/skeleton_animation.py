@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING, TypedDict, cast
+from typing import TYPE_CHECKING, TypedDict, cast, Literal, Callable
 from .bone_event import BoneEvent, BoneEventType
 
 if TYPE_CHECKING:
     from .slot_event import SlotEvent, SlotEventType
     from ..skeleton import Skeleton
     from ..slot import Slot
+    from .skeleton_animation_manager import SkeletonAnimationManager
 
     BoneEventsDict = dict[BoneEventType, BoneEvent]
     SlotEventsDict = dict[SlotEventType, SlotEvent]
@@ -15,10 +16,7 @@ if TYPE_CHECKING:
 
 
 class SkeletonAnimation:
-    framerate: float
-    duration: float
     frame = 0.0
-    speed: float
     smooth: bool = True
 
     events: "EventsDict" = {
@@ -37,6 +35,7 @@ class SkeletonAnimation:
         frame=0,
         speed=1.0,
         paused=False,
+        on_animation_end: Literal["_loop"] | Callable = "_loop",
     ):
         self.duration = info["duration"]
         self.framerate = framerate
@@ -47,7 +46,7 @@ class SkeletonAnimation:
         self.skeleton = skeleton
         self.speed = speed
 
-        self._instantiate_events(frame)
+        self.on_animation_end = on_animation_end
 
         self.playing = not paused
 
@@ -57,8 +56,25 @@ class SkeletonAnimation:
     def set_speed(self, speed: float):
         self.speed = speed
 
-    def update(self, dt):
-        """Update the current animation with the given delta time if it exists."""
+    def update(self, dt: float):
+        """
+        This method now ONLY handles the progression of time.
+        It should always be called, on both server and client.
+        """
+        if not self.playing:
+            return
+
+        self.frame += dt * self.speed * self.framerate
+        if self.frame >= self.duration:
+            if self.on_animation_end != "_loop":
+                on_animation_end = cast(Callable, self.on_animation_end)
+                on_animation_end()
+
+    def update_visuals(self, dt: float):
+        """
+        This new method handles all the expensive visual calculations.
+        It should ONLY be called on the client when render=True.
+        """
         if not self.playing:
             return
 
@@ -70,7 +86,11 @@ class SkeletonAnimation:
                 new_event = event.update(
                     frame_step,
                     lambda part, event_type, event_sequence, event_index, start_duration: BoneEvent(
-                        part, event_type, event_sequence, event_index, start_duration
+                        part,
+                        event_type,
+                        event_sequence,
+                        event_index,
+                        start_duration,
                     ),
                 )
                 if new_event:
@@ -92,8 +112,6 @@ class SkeletonAnimation:
                 )
                 if new_event:
                     self.events["slot"][event.slot.name][event_type] = new_event
-
-        self.frame += dt * self.speed
 
     def set_smooth(self, smooth=None):
         """Make the current animation smooth or not."""

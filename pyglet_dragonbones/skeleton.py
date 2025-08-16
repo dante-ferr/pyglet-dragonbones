@@ -4,25 +4,16 @@ from .animation.skeleton_animation import SkeletonAnimation
 import os
 import pyglet
 from .animation.skeleton_animation_manager import SkeletonAnimationManager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Callable
 
 if TYPE_CHECKING:
     from pyglet.graphics import Group
 
 
 class Skeleton:
-    current_animation_name: str | None = None
-    current_animation: SkeletonAnimation | None = None
-    frame = 0
-    framerate: float
-
     bones: dict[str, Bone]
 
-    animation_data: list[dict]
-
     target_angle: float | None = None
-
-    animation_manager: SkeletonAnimationManager
 
     def __init__(
         self,
@@ -62,8 +53,7 @@ class Skeleton:
         self.set_scale(1, 1)
         self.set_angle(0)
 
-        if self.render:
-            self.animation_manager = self._get_animation_manager()
+        self.animation_manager = self._get_animation_manager()
 
     def _get_skeleton_data(self, skeleton_path: str):
         with open(f"{skeleton_path}/{self.entity_name}_ske.json", "r") as file:
@@ -86,7 +76,9 @@ class Skeleton:
     def _get_animation_manager(self):
         animation_data = self.armature_data["animation"]
         framerate = self.skeleton_data["frameRate"]
-        return SkeletonAnimationManager(animation_data, self, framerate)
+        return SkeletonAnimationManager(
+            animation_data, self, framerate, render=self.render
+        )
 
     def _load_bones(self):
         data = self.armature_data["bone"]
@@ -161,17 +153,27 @@ class Skeleton:
         for bone in self.bones.values():
             bone.on_animation_start()
 
-    def run_animation(self, animation_name: str | None, starting_frame=0, speed=1):
-        if self.render:
-            self.animation_manager.run(animation_name, starting_frame, speed)
+    def run_animation(
+        self,
+        animation_name: str | None,
+        starting_frame=0,
+        speed=1,
+        on_end: Literal["_loop"] | Callable = "_loop",
+    ):
+        self.animation_manager.run(animation_name, starting_frame, speed, on_end)
 
     def update(self, dt):
-        """Update skeleton's attributes and draw each of its parts."""
-        for bone in self.bones.values():
-            bone.update(dt)
+        """
+        Updates the skeleton. The logic part always runs, the visual part is optional.
+        """
+        # The animation manager's time is always updated.
+        self.animation_manager.update(dt)
 
+        # The expensive bone/slot calculations only happen if we are rendering.
         if self.render:
-            self.animation_manager.update(dt)
+            for bone in self.bones.values():
+                bone.update(dt)
+            self.animation_manager.update_visuals(dt)
 
     def draw(self, dt):
         self.batch.draw()
@@ -182,3 +184,7 @@ class Skeleton:
             self.angle += angle_diff * self.angle_smoothing_speed * dt
 
             self.set_angle(self.angle)
+
+    @property
+    def current_animation_name(self):
+        return self.animation_manager.current_name

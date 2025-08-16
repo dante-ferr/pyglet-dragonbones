@@ -1,6 +1,9 @@
-from typing import Literal, Callable
+from typing import Literal, Callable, TYPE_CHECKING
 from .animation_event import AnimationEvent
 from ..slot import Slot
+
+if TYPE_CHECKING:
+    from .skeleton_animation_manager import SkeletonAnimationManager
 
 SlotEventType = Literal["displayFrame"]
 
@@ -19,7 +22,11 @@ class SlotEvent(AnimationEvent):
         event_index=0,
         start_duration=0.0,
     ):
-        super().__init__(event_sequence, event_index, start_duration)
+        super().__init__(
+            event_sequence,
+            event_index,
+            start_duration,
+        )
         self.slot = slot
         self.event_type = event_type
 

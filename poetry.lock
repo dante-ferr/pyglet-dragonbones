@@ -158,6 +158,18 @@ files = [
 ]
 
 [[package]]
+name = "pyglet"
+version = "2.1.6"
+description = "pyglet is a cross-platform games and multimedia package."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "pyglet-2.1.6-py3-none-any.whl", hash = "sha256:52ef9e75f3969b6a28bfa5c223e50ff03a05c2baa67bfe00d2a9eec4e831a7c5"},
+    {file = "pyglet-2.1.6.tar.gz", hash = "sha256:18483880b1411b39692eaf7756819285797b1aaf9ef63d40eb9f9b5d01c63416"},
+]
+
+[[package]]
 name = "pymunk"
 version = "6.11.1"
 description = "Pymunk is a easy-to-use pythonic 2D physics library"
@@ -238,4 +250,4 @@ dev = ["aafigure", "matplotlib", "numpy", "pygame", "pyglet", "sphinx", "wheel"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10.0"
-content-hash = "34fcd63637273601a66f975087008577e655423bc2b2c1215cd8de1ca0740a8b"
+content-hash = "14efcc3e94ca0d251fd9186a0c30c7e299316e4923a080bf8b23a796cef09f08"

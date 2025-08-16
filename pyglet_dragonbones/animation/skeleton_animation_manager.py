@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Callable, Literal
 from .skeleton_animation import SkeletonAnimation
 
 if TYPE_CHECKING:
@@ -10,12 +10,21 @@ class SkeletonAnimationManager:
     current_name: str | None = None
     current: SkeletonAnimation | None = None
 
-    def __init__(self, animation_data, skeleton: "Skeleton", framerate: float):
+    def __init__(
+        self, animation_data, skeleton: "Skeleton", framerate: float, render: bool
+    ):
         self.animation_data = animation_data
         self.skeleton = skeleton
         self.framerate = framerate
+        self.render = render
 
-    def run(self, animation_name: str | None, starting_frame=0, speed=1.0):
+    def run(
+        self,
+        animation_name: str | None,
+        starting_frame=0,
+        speed=1.0,
+        on_end: Literal["_loop"] | Callable = "_loop",
+    ):
         """Change skeleton's animation. If animation_name is None, the skeleton will be reset to its default pose."""
         if self.current_name == animation_name:
             return
@@ -34,12 +43,21 @@ class SkeletonAnimationManager:
             framerate=self.framerate,
             frame=starting_frame,
             speed=speed,
+            on_animation_end=on_end,
         )
 
+        if self.render:
+            self.current._instantiate_events(starting_frame)
+
     def update(self, dt):
-        """Update the current animation with the given delta time if it exists."""
+        """Updates the animation's internal time counter."""
         if self.current:
             self.current.update(dt)
+
+    def update_visuals(self, dt):
+        """Updates the visual components of the current animation."""
+        if self.current:
+            self.current.update_visuals(dt)
 
     def set_smooth(self, smooth: bool):
         """Make the current animation smooth or not."""
@@ -57,21 +75,3 @@ class SkeletonAnimationManager:
         if animation_info is None:
             raise ValueError(f"Animation {animation_name} not found.")
         return animation_info
-
-    # def get_bone_speed(self, bone: "Bone", animation_name: str, frame_range: tuple[int, int], reference: Literal["range", "all"]="all"):
-    #     """Calculate the speed of a bone based on its positions in frame_range (x per frame and y per frame). If reference is "range", the speed is calculated relative to the amount of frames in frame_range. If reference is "all", the speed is calculated relative to the total amount of frames in the animation."""
-    #     animation_info = self._get_animation_info(animation_name)
-
-    #     x_diff_count = 0
-    #     y_diff_count = 0
-    #     for frame in range(frame_range[0], frame_range[1]):
-    #         x_diff = animation_info["frames"][frame]["position"]["x"] - animation_info["frames"][frame_range[0]]["position"]["x"]
-    #         y_diff = animation_info["frames"][frame]["position"]["y"] - animation_info["frames"][frame_range[0]]["position"]["y"]
-    #         x_diff_count += x_diff
-    #         y_diff_count += y_diff
-
-    #     if reference == "range":
-    #         x_diff_count /= frame_range[1] - frame_range[0]
-    #         y_diff_count /= frame_range[1] - frame_range[0]
-    #     elif reference == "all":
-    #         x_diff_count /= len(animation_info["frames"])
