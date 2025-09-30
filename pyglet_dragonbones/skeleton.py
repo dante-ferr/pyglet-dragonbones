@@ -1,19 +1,25 @@
 import json
-from .bone import Bone
-from .animation.skeleton_animation import SkeletonAnimation
 import os
 import pyglet
 from .animation.skeleton_animation_manager import SkeletonAnimationManager
+from .skeleton_structure_manager import SkeletonStructureManager
 from typing import TYPE_CHECKING, Literal, Callable
 
 if TYPE_CHECKING:
     from pyglet.graphics import Group
+    from .bone import Bone
+    from .slot import Slot
 
 
 class Skeleton:
-    bones: dict[str, Bone]
+    bones: dict[str, "Bone"]
+    slots: dict[str, "Slot"] | None
 
-    target_angle: float | None = None
+    _position: tuple[float, float]
+    _angle: float
+    _scale: tuple[float, float]
+
+    _target_angle: float | None = None
 
     def __init__(
         self,
@@ -47,31 +53,19 @@ class Skeleton:
         if render:
             self.batch = pyglet.graphics.Batch()
 
-        self._load_structure()
+        structure_manager = SkeletonStructureManager(self)
+        self.bones = structure_manager.bones
+        self.slots = structure_manager.slots
 
-        self.set_position(0, 0)
-        self.set_scale(1, 1)
-        self.set_angle(0)
+        self.position = (0, 0)
+        self.scale = (1, 1)
+        self.angle = 0
 
         self.animation_manager = self._get_animation_manager()
 
     def _get_skeleton_data(self, skeleton_path: str):
         with open(f"{skeleton_path}/{self.entity_name}_ske.json", "r") as file:
             return json.load(file)
-
-    def _load_structure(self):
-        self.bones = self._load_bones()
-        if self.render:
-            from .get_subtextures import get_subtextures
-
-            subtextures = get_subtextures(
-                f"{self.skeleton_path}/{self.entity_name}_tex.json",
-                f"{self.skeleton_path}/{self.entity_name}_tex.png",
-            )
-            self.slots = self._load_slots(
-                (self.armature_data["slot"], self.armature_data["skin"][0]["slot"]),
-                subtextures=subtextures,
-            )
 
     def _get_animation_manager(self):
         animation_data = self.armature_data["animation"]
@@ -80,76 +74,50 @@ class Skeleton:
             animation_data, self, framerate, render=self.render
         )
 
-    def _load_bones(self):
-        data = self.armature_data["bone"]
-        bones: dict[str, Bone] = {}
+    @property
+    def position(self) -> tuple[float, float]:
+        return self._position
 
-        for b in data:
-            bone_name = b["name"]
-            bone_group = self.groups.get(bone_name) if self.groups else None
-
-            bone = Bone(b, self, bone_group)
-            bones[bone_name] = bone
-
-        return bones
-
-    def _load_slots(self, data, subtextures):
-        from .slot import Slot
-
-        slots: dict[str, Slot] = {}
-
-        slot_data, skin_data = data
-        # Iterate through armature slots
-        for slot_info in slot_data:
-            slot_displays = None
-
-            # Find matching slot in skin and retrieve display info
-            for slot in skin_data:
-                if slot["name"] == slot_info["name"]:
-                    slot_displays = slot.get("display")  # Use .get() to avoid KeyError
-                    break
-
-            # If slot displays are found, create a dictionary for subtextures
-            slot_subtextures = {}
-            if slot_displays:
-                slot_subtextures = [
-                    subtextures[display["name"]] for display in slot_displays
-                ]
-            else:
-                return
-
-            # Create a slot and assign it to the bone's slot dictionary
-            bone_name = slot_info["parent"]
-            slot_name = slot_info["name"]
-
-            bone = self.bones[bone_name]
-            slot = Slot(
-                slot_info, bone=bone, subtextures=slot_subtextures, batch=self.batch
-            )
-            slots[slot_name] = slot
-
-        return slots
-
-    def set_position(self, x: float, y: float):
+    @position.setter
+    def position(self, value: tuple[float, float]):
         """Change skeleton's position."""
-        self.position = (x, y)
+        self._position = value
 
-    def set_angle(self, angle: float):
+    @property
+    def angle(self) -> float:
+        return self._angle
+
+    @angle.setter
+    def angle(self, value: float):
         """Change skeleton's angle."""
-        self.angle = angle
+        self._angle = value + 180
 
-    def set_scale(self, x: float, y: float):
+    @property
+    def scale(self) -> tuple[float, float]:
+        return self._scale
+
+    @scale.setter
+    def scale(self, value: tuple[float, float]):
         """Change skeleton's scale."""
-        self.scale = (x, y)
+        self._scale = value[0] * -1, value[1]
 
-    def set_target_angle(self, angle: float):
-        self.target_angle = angle
+    @property
+    def target_angle(self) -> float | None:
+        return self._target_angle
 
-    def _do_default_pose(self):
+    @target_angle.setter
+    def target_angle(self, value: float | None):
+        self._target_angle = value
+
+    def do_default_pose(self):
         for bone in self.bones.values():
             bone.do_default_pose()
 
     def on_animation_start(self):
+        # Every time we run a new animation, reset the skeleton to its default pose. That's necessary because some animations might not affect all
+        # bones, and we don't want the previous animation's pose to affect the new one.
+        self.do_default_pose()
+
         for bone in self.bones.values():
             bone.on_animation_start()
 
@@ -166,24 +134,21 @@ class Skeleton:
         """
         Updates the skeleton. The logic part always runs, the visual part is optional.
         """
-        # The animation manager's time is always updated.
         self.animation_manager.update(dt)
+        self.update_angle_to_target(dt)
 
-        # The expensive bone/slot calculations only happen if we are rendering.
         if self.render:
+            self.animation_manager.update_visuals(dt)
             for bone in self.bones.values():
                 bone.update(dt)
-            self.animation_manager.update_visuals(dt)
 
     def draw(self, dt):
         self.batch.draw()
 
     def update_angle_to_target(self, dt):
-        if self.target_angle is not None:
-            angle_diff = (self.target_angle - self.angle + 180) % 360 - 180
+        if self._target_angle is not None:
+            angle_diff = (self._target_angle - self.angle + 180) % 360 - 180
             self.angle += angle_diff * self.angle_smoothing_speed * dt
-
-            self.set_angle(self.angle)
 
     @property
     def current_animation_name(self):

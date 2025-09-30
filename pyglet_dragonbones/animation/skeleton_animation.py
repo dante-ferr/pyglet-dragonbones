@@ -18,12 +18,6 @@ if TYPE_CHECKING:
 class SkeletonAnimation:
     frame = 0.0
     smooth: bool = True
-
-    events: "EventsDict" = {
-        "bone": {},
-        "slot": {},
-    }
-
     bone_info: dict
     slot_info: dict
 
@@ -37,6 +31,7 @@ class SkeletonAnimation:
         paused=False,
         on_animation_end: Literal["_loop"] | Callable = "_loop",
     ):
+        self.name = info["name"]
         self.duration = info["duration"]
         self.framerate = framerate
         self.start_frame = frame
@@ -44,17 +39,27 @@ class SkeletonAnimation:
         self.slot_info = info["slot"]
 
         self.skeleton = skeleton
-        self.speed = speed
+        self._speed = speed
 
         self.on_animation_end = on_animation_end
 
         self.playing = not paused
 
+        self.events: "EventsDict" = {
+            "bone": {},
+            "slot": {},
+        }
+
     def set_frame(self, frame: float):
         self._instantiate_events(frame)
 
-    def set_speed(self, speed: float):
-        self.speed = speed
+    @property
+    def speed(self) -> float:
+        return self._speed
+
+    @speed.setter
+    def speed(self, value: float):
+        self._speed = value
 
     def update(self, dt: float):
         """
@@ -64,7 +69,7 @@ class SkeletonAnimation:
         if not self.playing:
             return
 
-        self.frame += dt * self.speed * self.framerate
+        self.frame += dt * self._speed * self.framerate
         if self.frame >= self.duration:
             if self.on_animation_end != "_loop":
                 on_animation_end = cast(Callable, self.on_animation_end)
@@ -78,7 +83,7 @@ class SkeletonAnimation:
         if not self.playing:
             return
 
-        frame_step = dt * self.speed * self.framerate
+        frame_step = dt * self._speed * self.framerate
 
         self.set_smooth()
         for bone_events in self.events["bone"].values():
@@ -135,8 +140,12 @@ class SkeletonAnimation:
 
     def _instantiate_events(self, frame: float = 0):
         """Instantiate the events for the given frame."""
-        self._instantiate_bone_events(frame)
+        self.events = {
+            "bone": {},
+            "slot": {},
+        }
 
+        self._instantiate_bone_events(frame)
         self._instantiate_slot_events(frame)
 
     def _instantiate_bone_events(self, frame: float):

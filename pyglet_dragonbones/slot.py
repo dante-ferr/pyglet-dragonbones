@@ -1,5 +1,5 @@
 import pyglet
-from .get_subtextures import Subtexture
+from .subtexture_manager import Subtexture
 from typing import TYPE_CHECKING
 from .utils import refine_texture
 
@@ -26,7 +26,7 @@ class Slot:
         self.relative_angle = 0.0
         self.relative_scale = (1.0, 1.0)
 
-        self.default_display = slot_info.get("displayIndex", 1) - 1
+        self.default_display = slot_info.get("displayIndex", 1)  # - 1
         self.current_display = self.default_display
         default_texture = self._get_texture_from_image(
             self.subtextures[self.default_display]["image"]
@@ -62,9 +62,16 @@ class Slot:
 
     def update_angle(self):
         """Follow parent bone's angle"""
-        self.sprite.rotation = self.bone.angle + self.relative_angle
+        self.sprite.rotation = (
+            self.bone.angle + self.relative_angle + self.texture_angle
+        )
+        # self.sprite.rotation = self.bone.angle + self.relative_angle
 
     def update_scale(self):
         """Follow parent bone's scale"""
         self.sprite.scale_x = self.bone.scale[0] * self.relative_scale[0]
         self.sprite.scale_y = self.bone.scale[1] * self.relative_scale[1]
+
+    @property
+    def texture_angle(self) -> float:
+        return self.subtextures[self.current_display]["angle"]

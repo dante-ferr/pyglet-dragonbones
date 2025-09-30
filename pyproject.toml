@@ -11,6 +11,9 @@ pymunk = "*"
 numpy = "*"
 pyglet = "*"
 
+[tool.poetry.dev-dependencies]
+matplotlib = "*"
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]

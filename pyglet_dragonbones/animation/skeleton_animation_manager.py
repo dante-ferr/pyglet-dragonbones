@@ -33,7 +33,7 @@ class SkeletonAnimationManager:
         self.skeleton.on_animation_start()
 
         if animation_name is None:
-            self.skeleton._do_default_pose()
+            self.skeleton.do_default_pose()
             self.current = None
             return
 

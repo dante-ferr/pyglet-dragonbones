@@ -1,7 +1,4 @@
-from typing import Callable, Literal, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .skeleton_animation_manager import SkeletonAnimationManager
+from typing import Callable
 
 class AnimationEvent:
     event_sequence: dict

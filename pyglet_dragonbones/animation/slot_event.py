@@ -1,9 +1,6 @@
-from typing import Literal, Callable, TYPE_CHECKING
+from typing import Literal, Callable
 from .animation_event import AnimationEvent
 from ..slot import Slot
-
-if TYPE_CHECKING:
-    from .skeleton_animation_manager import SkeletonAnimationManager
 
 SlotEventType = Literal["displayFrame"]
 
