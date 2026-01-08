@@ -157,16 +157,26 @@ class BoneTransform:
             self.bone.relative_angle * self.bone.scale[0] * self.bone.scale[1]
         )
         anchored_angle = scaled_angle + self.base_angle
-        self.target_angle = self.bone.parent.angle + anchored_angle
+
+        parent_angle = self.bone.parent.angle
+        if hasattr(self.bone.parent, "skeleton_path"):
+            parent_angle += 180
+
+        self.target_angle = parent_angle + anchored_angle
 
     def _update_scale(self):
         anchored_scale = (
             self.bone.relative_scale[0] * self.base_scale[0],
             self.bone.relative_scale[1] * self.base_scale[1],
         )
+
+        parent_scale = self.bone.parent.scale
+        if hasattr(self.bone.parent, "skeleton_path"):
+            parent_scale = (parent_scale[0] * -1, parent_scale[1])
+
         self.target_scale = (
-            self.bone.parent.scale[0] * anchored_scale[0],
-            self.bone.parent.scale[1] * anchored_scale[1],
+            parent_scale[0] * anchored_scale[0],
+            parent_scale[1] * anchored_scale[1],
         )
 
     def _update_relative_position_to_target(self, dt):

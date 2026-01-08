@@ -90,7 +90,7 @@ class Skeleton:
     @angle.setter
     def angle(self, value: float):
         """Change skeleton's angle."""
-        self._angle = value + 180
+        self._angle = value
 
     @property
     def scale(self) -> tuple[float, float]:
@@ -99,7 +99,7 @@ class Skeleton:
     @scale.setter
     def scale(self, value: tuple[float, float]):
         """Change skeleton's scale."""
-        self._scale = value[0] * -1, value[1]
+        self._scale = value
 
     @property
     def target_angle(self) -> float | None:
